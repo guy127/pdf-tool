@@ -108,7 +108,7 @@ body.hot .hero{border-color:var(--em)}
 [hidden]{display:none!important}
 
 /* toast */
-#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:25;width:min(560px,calc(100% - 24px));background:var(--card);color:var(--ink);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.18);border:1px solid var(--line);padding:10px 10px 10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#toast{position:fixed;z-index:50;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,calc(100% - 24px));background:var(--card);color:var(--ink);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.18);border:1px solid var(--line);padding:10px 10px 10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #toast .tx{flex:1;font-size:15px;font-weight:600}
 #toast .prog{flex-basis:100%;height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin:2px 6px 4px 0}
 #toast .prog i{display:block;height:100%;width:0;background:var(--em);transition:width .2s}
@@ -139,6 +139,28 @@ body.hot .hero{border-color:var(--em)}
 .sum svg{width:20px;height:20px;flex:none}
 .row{display:flex;gap:10px}.row .btn{flex:1}
 .err{color:#d0123f;font-weight:700;font-size:14px;margin:-8px 0 12px}
+/* save result */
+.res{display:flex;gap:14px;align-items:center;background:var(--desk);border-radius:18px;padding:18px;margin-bottom:12px}
+.res svg{width:44px;height:44px;flex:none;color:var(--emd)}
+.res strong{display:block;font-size:15px;overflow-wrap:anywhere}
+.res .big{display:block;font-size:34px;line-height:1.1;font-weight:800;font-variant-numeric:tabular-nums}
+.bprog{height:10px;border-radius:999px;background:var(--desk);overflow:hidden;margin:6px 0 18px}
+.bprog i{display:block;height:100%;width:0;background:var(--em);transition:width .2s}
+.qh{margin:6px 2px 0;font-size:13.5px;color:var(--mut)}
+/* viewer */
+.vw{position:fixed;inset:0;z-index:35;background:#0b0b0b;color:#fff;display:flex;flex-direction:column}
+.vbar{display:flex;align-items:center;gap:6px;padding:8px 10px}
+.vtop{padding-top:max(8px,env(safe-area-inset-top))}
+.vbot{justify-content:center;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.vbar b{flex:1;text-align:center;font-size:16px}
+.vb{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.1);color:#fff}
+.vb svg{width:22px;height:22px}
+.vb:disabled{opacity:.3}
+#vZ{min-width:64px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.vstage{flex:1;overflow:auto;display:flex;position:relative;touch-action:none;overscroll-behavior:contain}
+.vstage img{margin:auto;display:block;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,.5);user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none;flex:none}
+.vload{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;color:#bbb;pointer-events:none}
+.sheetbox{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 @media(max-width:700px){
   .hero{grid-template-columns:minmax(0,1fr);text-align:center}.hero p{margin-inline:auto}.chips{justify-content:center}
   .art{order:-1;max-width:260px}
@@ -187,7 +209,7 @@ body.hot .hero{border-color:var(--em)}
   <section id="work" hidden>
     <div class="wtop">
       <h2 id="wCount">0 หน้า</h2>
-      <p id="wHint">แตะหน้าเพื่อเลือก · ลาก ⠿ เพื่อย้าย</p>
+      <p id="wHint">แตะเพื่อเลือก · แตะค้างเพื่อดูเต็มจอ · ลาก ⠿ เพื่อย้าย</p>
       <span class="sp"></span>
       <button class="link" id="selAll">เลือกทั้งหมด</button>
       <button class="link" id="clear">เริ่มใหม่</button>
@@ -213,18 +235,50 @@ body.hot .hero{border-color:var(--em)}
 
 <div class="ov" id="saveOv" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="svT">
   <div class="grab"></div>
-  <h2 id="svT">บันทึกไฟล์</h2>
-  <p class="lead" id="svLead"></p>
-  <div class="opts">
-    <button class="opt" data-k="pdf" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h4"/></svg><strong>PDF ไฟล์เดียว</strong><span>รวมทุกหน้าตามลำดับ</span></button>
-    <button class="opt" data-k="img" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg><strong>รูปภาพ</strong><span>แยกเป็นรูปทีละหน้า</span></button>
+  <div id="svForm">
+    <h2 id="svT">บันทึกไฟล์</h2>
+    <p class="lead" id="svLead"></p>
+    <div class="opts">
+      <button class="opt" data-k="pdf" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h4"/></svg><strong>PDF ไฟล์เดียว</strong><span>รวมทุกหน้าตามลำดับ</span></button>
+      <button class="opt" data-k="img" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg><strong>รูปภาพ</strong><span>แยกเป็นรูปทีละหน้า</span></button>
+    </div>
+    <div class="fld" id="fQ"><span class="lb">ขนาดไฟล์</span><div class="seg" data-g="q"><button data-v="orig">ต้นฉบับ</button><button data-v="mid">กลาง</button><button data-v="small">เล็ก</button></div><p class="qh" id="qHint"></p></div>
+    <div class="fld" id="fSize"><span class="lb">ขนาดหน้าสำหรับรูป</span><div class="seg" data-g="size"><button data-v="a4">A4</button><button data-v="fit">เท่ากับรูป</button></div></div>
+    <div class="fld" id="fFmt" hidden><span class="lb">ชนิดรูป</span><div class="seg" data-g="fmt"><button data-v="jpg">JPG · ไฟล์เล็ก</button><button data-v="png">PNG · คมชัด</button></div></div>
+    <div class="fld"><label for="fname">ชื่อไฟล์</label><div class="inp"><input id="fname" value="เอกสาร" autocomplete="off" enterkeyhint="done"><em id="ext">.pdf</em></div></div>
+    <div class="row"><button class="btn ghost" id="svCancel">ยกเลิก</button><button class="btn pri" id="svGo">สร้างไฟล์</button></div>
   </div>
-  <div class="fld" id="fSize"><span class="lb">ขนาดหน้าสำหรับรูป</span><div class="seg" data-g="size"><button data-v="a4" aria-pressed="true">A4</button><button data-v="fit" aria-pressed="false">เท่ากับรูป</button></div></div>
-  <div class="fld" id="fFmt" hidden><span class="lb">ชนิดรูป</span><div class="seg" data-g="fmt"><button data-v="jpg" aria-pressed="true">JPG · ไฟล์เล็ก</button><button data-v="png" aria-pressed="false">PNG · คมชัด</button></div></div>
-  <div class="fld"><label for="fname">ชื่อไฟล์</label><div class="inp"><input id="fname" value="เอกสาร" autocomplete="off" enterkeyhint="done"><em id="ext">.pdf</em></div></div>
-  <div class="sum" id="sum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="sumTx"></span></div>
-  <div class="row"><button class="btn ghost" id="svCancel">ยกเลิก</button><button class="btn pri" id="svGo">บันทึก</button></div>
+  <div id="svBusy" hidden>
+    <h2>กำลังสร้างไฟล์…</h2>
+    <p class="lead" id="bTx">เตรียมไฟล์</p>
+    <div class="bprog"><i id="bBar"></i></div>
+    <div class="row"><button class="btn ghost" id="svStop">ยกเลิก</button></div>
+  </div>
+  <div id="svDone" hidden>
+    <h2>ไฟล์พร้อมแล้ว</h2>
+    <p class="lead" id="rNote"></p>
+    <div class="res"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 14l2 2 4-4" stroke-linecap="round"/></svg><div><span class="big" id="rSize"></span><strong id="rName"></strong></div></div>
+    <div class="sum" id="rCmpBox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="rCmp"></span></div>
+    <div class="row"><button class="btn ghost" id="svBack">แก้การตั้งค่า</button><button class="btn pri" id="svDl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>ดาวน์โหลด</button></div>
+  </div>
 </div></div>
+
+<div class="vw" id="vw" hidden role="dialog" aria-modal="true" aria-label="ดูหน้าแบบเต็มจอ">
+  <div class="vbar vtop">
+    <button class="vb" id="vClose" aria-label="ปิด"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <b id="vNum">หน้า 1 / 1</b>
+    <button class="vb" id="vRot" aria-label="หมุนหน้านี้"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+    <button class="vb" id="vDel" aria-label="ลบหน้านี้"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+  </div>
+  <div class="vstage" id="vStage"><img id="vImg" alt=""><div class="vload" id="vLoad">กำลังโหลด…</div></div>
+  <div class="vbar vbot">
+    <button class="vb" id="vPrev" aria-label="หน้าก่อนหน้า"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="vb" id="vOut" aria-label="ซูมออก"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
+    <span id="vZ">100%</span>
+    <button class="vb" id="vIn" aria-label="ซูมเข้า"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
+    <button class="vb" id="vNext" aria-label="หน้าถัดไป"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+</div>
 
 <div class="ov" id="pwOv" hidden><form class="sheet" id="pwForm" role="dialog" aria-modal="true" aria-labelledby="pwT">
   <div class="grab"></div>
@@ -243,7 +297,9 @@ body.hot .hero{border-color:var(--em)}
 <script>
 {
 const $ = s => document.querySelector(s);
-const S = {pages: [], hist: [], sel: new Set(), dl: null, busy: false, opt: {k: 'pdf', size: 'a4', fmt: 'jpg'}, scope: null};
+const S = {pages: [], hist: [], sel: new Set(), busy: false, opt: {k: 'pdf', size: 'a4', fmt: 'jpg', q: null}, scope: null, out: null, job: 0};
+let DL = null; // Claude downloads capability when this page runs inside claude.ai
+if (window.claude && window.claude.use) window.claude.use('downloads').then(d => { DL = d; }).catch(() => {});
 let uid = 0;
 const grid = $('#grid'), fileIn = $('#file');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -254,6 +310,7 @@ const IC = {
   del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
   hd: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg>',
   ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  zoom: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5M11 8.5v5M8.5 11h5"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
 };
 
@@ -271,7 +328,7 @@ function toast(msg, {undo = false, prog = null, stay = false} = {}) {
 $('#tUndo').onclick = () => { undo(); $('#toast').hidden = true; };
 
 function snap() { S.hist.push(S.pages.map(p => ({...p}))); if (S.hist.length > 40) S.hist.shift(); }
-function undo() { if (!S.hist.length) return; S.pages = S.hist.pop(); render(); }
+function undo() { if (!S.hist.length) return; S.pages = S.hist.pop(); render(); if (!$('#vw').hidden) showPage(V.k); }
 function loadImg(url) { return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; }); }
 
 /* ---- HEIC: native first (Safari), else convert with heic2any ---- */
@@ -333,7 +390,7 @@ async function addFiles(list) {
         const buf = await f.arrayBuffer();
         const r = await openPdf(f, buf);
         if (!r) continue;
-        const src = {kind: 'pdf', name: f.name, buf, doc: r.doc, locked: r.locked};
+        const src = {kind: 'pdf', name: f.name, size: f.size, buf, doc: r.doc, locked: r.locked};
         const N = r.doc.numPages;
         for (let i = 1; i <= N; i++) {
           toast(`กำลังอ่าน ${f.name} · หน้า ${i}/${N}`, {prog: base + part * i / N, stay: true});
@@ -348,7 +405,7 @@ async function addFiles(list) {
       } else if (f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp|hei[cf])$/i.test(f.name)) {
         toast(`กำลังเปิด ${f.name}`, {prog: base, stay: true});
         const {img, url, type} = await openImage(f, base);
-        S.pages.push({id: ++uid, src: {kind: 'img', name: f.name, img, type}, rot: 0, thumb: url, label: f.name});
+        S.pages.push({id: ++uid, src: {kind: 'img', name: f.name, size: f.size, img, type}, rot: 0, thumb: url, label: f.name});
         added++; render();
       } else failed.push(f.name);
     } catch (e) { failed.push(f.name); }
@@ -375,7 +432,7 @@ function render() {
     return `<li class="card${on ? ' sel' : ''}" data-id="${p.id}">
       <button class="sheetbox" data-a="s" aria-pressed="${on}" aria-label="หน้า ${k + 1} แตะเพื่อเลือก"><img src="${p.thumb}" alt="" style="transform:rotate(${p.rot}deg)${p.rot % 180 ? ';max-width:80%;max-height:80%' : ''}"></button>
       <span class="num">${k + 1}</span><span class="chk">${IC.ok}</span>${p.src.locked ? '<span class="tag">ปลดล็อกแล้ว</span>' : ''}
-      <div class="tools"><span class="ib hd" aria-label="ลากเพื่อย้าย" title="ลากเพื่อย้าย">${IC.hd}</span><span class="nm" title="${esc(p.label)}">${esc(p.label)}</span><button class="ib" data-a="r" aria-label="หมุนหน้า ${k + 1}" title="หมุน">${IC.rot}</button><button class="ib" data-a="d" aria-label="ลบหน้า ${k + 1}" title="ลบ">${IC.del}</button></div>
+      <div class="tools"><span class="ib hd" aria-label="ลากเพื่อย้าย" title="ลากเพื่อย้าย">${IC.hd}</span><span class="nm" title="${esc(p.label)}">${esc(p.label)}</span><button class="ib" data-a="v" aria-label="ดูหน้า ${k + 1} แบบเต็มจอ" title="ดูเต็มจอ">${IC.zoom}</button><button class="ib" data-a="r" aria-label="หมุนหน้า ${k + 1}" title="หมุน">${IC.rot}</button><button class="ib" data-a="d" aria-label="ลบหน้า ${k + 1}" title="ลบ">${IC.del}</button></div>
     </li>`;
   }).join('') + (n ? `<li><button class="addtile" data-a="add">${IC.plus}เพิ่มไฟล์</button></li>` : '');
   setBusy(S.busy);
@@ -389,14 +446,27 @@ function setBusy(b) {
 const idx = id => S.pages.findIndex(p => p.id === +id);
 grid.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || S.busy || drag.moved) return;
+  if (lp.fired) { lp.fired = false; return; }
   if (b.dataset.a === 'add') return pick();
   const k = idx(b.closest('.card').dataset.id); if (k < 0) return;
   const a = b.dataset.a, id = S.pages[k].id;
   if (a === 's') { S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); render(); return; }
+  if (a === 'v') return openViewer(k);
   snap();
   if (a === 'r') { S.pages[k].rot = (S.pages[k].rot + 90) % 360; render(); }
   if (a === 'd') { S.pages.splice(k, 1); render(); toast(`ลบหน้า ${k + 1} แล้ว`, {undo: true}); }
 });
+
+/* ---- long press a page to open the viewer ---- */
+const lp = {t: 0, x: 0, y: 0, fired: false};
+grid.addEventListener('pointerdown', e => {
+  const sb = e.target.closest('.sheetbox'); if (!sb || S.busy) return;
+  lp.fired = false; lp.x = e.clientX; lp.y = e.clientY; clearTimeout(lp.t);
+  lp.t = setTimeout(() => { lp.fired = true; const k = idx(sb.closest('.card').dataset.id); if (k >= 0) openViewer(k); }, 450);
+});
+grid.addEventListener('pointermove', e => { if (lp.t && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 10) { clearTimeout(lp.t); lp.t = 0; } });
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) grid.addEventListener(ev, () => { clearTimeout(lp.t); lp.t = 0; });
+grid.addEventListener('contextmenu', e => { if (e.target.closest('.sheetbox')) e.preventDefault(); });
 
 /* ---- drag to reorder (pointer events: mouse + iPhone touch) ---- */
 const drag = {id: null, img: null, over: null, after: false, moved: false, raf: 0, y: 0};
@@ -452,42 +522,78 @@ $('#undoTop').onclick = () => { undo(); toast('ย้อนกลับแล้
 $('#clear').onclick = () => { snap(); S.pages = []; S.sel.clear(); render(); toast('ล้างทุกหน้าแล้ว', {undo: true}); };
 
 /* ---- save sheet ---- */
+const Q = {mid: {px: 2000, q: .72}, small: {px: 1400, q: .55}};
+const QH = {orig: 'คุณภาพเดิม ข้อความใน PDF ยังคัดลอกได้', mid: 'เหมาะส่งอีเมลหรือ LINE อ่านชัด · ทุกหน้าจะเป็นภาพ', small: 'ไฟล์เล็กที่สุด อ่านบนจอได้ · ทุกหน้าจะเป็นภาพ'};
+const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(b >= 10485760 ? 0 : 1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+const srcSize = list => [...new Set(list.map(p => p.src))].reduce((t, s) => t + (s.size || 0), 0);
+function view(v) { for (const id of ['svForm', 'svBusy', 'svDone']) $('#' + id).hidden = id !== v; }
 function openSave(scope) {
-  S.scope = scope; $('#saveOv').hidden = false; syncSave();
+  S.scope = scope; const list = scope || S.pages;
+  if (!S.opt.q) S.opt.q = list.some(p => p.src.kind === 'img') ? 'mid' : 'orig';
+  view('svForm'); $('#saveOv').hidden = false; $('#toast').hidden = true; syncSave();
 }
+function closeSave() { S.job++; S.out = null; $('#saveOv').hidden = true; setBusy(false); }
 function syncSave() {
-  const o = S.opt, list = S.scope || S.pages, n = list.length, anyImg = list.some(p => p.src.kind === 'img'), anyLock = list.some(p => p.src.locked);
+  const o = S.opt, list = S.scope || S.pages, n = list.length, anyImg = list.some(p => p.src.kind === 'img');
   document.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === o.k));
   document.querySelectorAll('.seg').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === o[g.dataset.g])));
+  $('#fQ').hidden = o.k !== 'pdf'; $('#qHint').textContent = QH[o.q];
   $('#fSize').hidden = o.k !== 'pdf' || !anyImg; $('#fFmt').hidden = o.k !== 'img';
   $('#svT').textContent = S.scope ? `บันทึก ${n} หน้าที่เลือก` : 'บันทึกไฟล์';
-  $('#svLead').textContent = S.scope ? 'บันทึกเฉพาะหน้าที่เลือกเป็นไฟล์ใหม่ ไฟล์อื่นไม่เปลี่ยน' : `ทั้งหมด ${n} หน้า ตามลำดับที่จัดไว้`;
-  const ext = o.k === 'pdf' ? 'pdf' : n > 1 ? 'zip' : o.fmt;
-  $('#ext').textContent = '.' + ext;
-  $('#sumTx').textContent = o.k === 'pdf'
-    ? `ได้ PDF 1 ไฟล์ ${n} หน้า${anyLock ? ' · หน้าที่ปลดล็อกจะเป็นภาพ' : ''}`
-    : n > 1 ? `ได้รูป ${n} รูป รวมอยู่ในไฟล์ .zip (แตะเปิดเพื่อแตกไฟล์)` : 'ได้รูป 1 รูป';
+  $('#svLead').textContent = S.scope ? 'บันทึกเฉพาะหน้าที่เลือกเป็นไฟล์ใหม่' : `ทั้งหมด ${n} หน้า ตามลำดับที่จัดไว้`;
+  $('#ext').textContent = '.' + (o.k === 'pdf' ? 'pdf' : n > 1 ? 'zip' : o.fmt);
 }
 document.querySelectorAll('.opt').forEach(b => b.onclick = () => { S.opt.k = b.dataset.k; syncSave(); });
 document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { S.opt[b.parentNode.dataset.g] = b.dataset.v; syncSave(); });
 $('#saveBtn').onclick = () => openSave(null);
-$('#svCancel').onclick = () => { $('#saveOv').hidden = true; };
-$('#saveOv').onclick = e => { if (e.target.id === 'saveOv') $('#saveOv').hidden = true; };
+$('#svCancel').onclick = closeSave;
+$('#svStop').onclick = () => { S.job++; view('svForm'); setBusy(false); };
+$('#svBack').onclick = () => { S.out = null; view('svForm'); };
+$('#saveOv').onclick = e => { if (e.target.id === 'saveOv' && $('#svBusy').hidden) closeSave(); };
 $('#fname').onkeydown = e => { if (e.key === 'Enter') $('#svGo').click(); };
+function prog(txt, f, job) {
+  if (job !== S.job) throw new Error('stopped');
+  $('#bTx').textContent = txt; $('#bBar').style.width = Math.round(f * 100) + '%';
+}
 $('#svGo').onclick = async () => {
-  const list = S.scope || S.pages; $('#saveOv').hidden = true; setBusy(true);
+  const list = S.scope || S.pages, job = ++S.job, o = S.opt; view('svBusy'); setBusy(true); prog('เตรียมไฟล์', 0, job);
   try {
-    if (S.opt.k === 'pdf') { const bytes = await buildPdf(list); setBusy(false); await save(baseName() + '.pdf', bytes); }
-    else await saveImages(list);
-  } catch (e) { toast('สร้างไฟล์ไม่สำเร็จ ไฟล์ต้นทางอาจเสีย'); }
+    let blob, name;
+    if (o.k === 'pdf') { blob = new Blob([await buildPdf(list, job)], {type: 'application/pdf'}); name = baseName() + '.pdf'; }
+    else ({blob, name} = await buildImages(list, job));
+    if (job !== S.job) return;
+    S.out = {blob, name};
+    const before = srcSize(list), after = blob.size;
+    $('#rSize').textContent = fmtSize(after); $('#rName').textContent = name;
+    $('#rNote').textContent = o.k === 'pdf' ? `PDF ${list.length} หน้า` : list.length > 1 ? `รูป ${list.length} รูป รวมในไฟล์ .zip` : 'รูป 1 รูป';
+    const saved = before ? Math.round((1 - after / before) * 100) : 0;
+    $('#rCmp').textContent = before && saved >= 5 ? `ไฟล์ต้นทาง ${fmtSize(before)} · เล็กลง ${saved}%`
+      : o.k === 'pdf' && o.q !== 'small' && after > 5242880 ? 'ยังใหญ่อยู่ ถ้าจะส่งอีเมล ลองกด "แก้การตั้งค่า" แล้วเลือกขนาด "เล็ก"'
+      : before ? `ไฟล์ต้นทาง ${fmtSize(before)}` : 'พร้อมดาวน์โหลด';
+    view('svDone');
+  } catch (e) { if (job === S.job) { view('svForm'); toast('สร้างไฟล์ไม่สำเร็จ ไฟล์ต้นทางอาจเสีย'); } }
   setBusy(false);
+};
+$('#svDl').onclick = async () => {
+  if (!S.out) return; const {blob, name} = S.out;
+  if (DL) {
+    try { await DL.save({filename: name, data: blob}); closeSave(); toast(`บันทึก ${name} แล้ว`); }
+    catch (e) { toast(({declined: 'ยกเลิกการบันทึก', rate_limited: 'รอสักครู่แล้วลองใหม่', host_unavailable: 'แอปนี้บันทึกไฟล์ไม่ได้ ลองเปิดใน Safari หรือบนคอมพิวเตอร์'})[e && e.code] || 'บันทึกไม่สำเร็จ ลองอีกครั้ง'); }
+    return;
+  }
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  closeSave(); toast(`บันทึก ${name} แล้ว · iPhone ดูได้ที่แอปไฟล์ → ดาวน์โหลด`);
 };
 
 /* ---- export ---- */
 function baseName() { return ($('#fname').value.trim() || 'เอกสาร').replace(/[\\/:*?"<>|]+/g, '-').replace(/\.(pdf|zip|png|jpe?g)$/i, '').slice(0, 120); }
 function canvasBlob(c, type, q) { return new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('blob')), type, q)); }
-function imgCanvas(im, rot) {
-  let w = im.naturalWidth, h = im.naturalHeight; const k = Math.min(1, MAXPX / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
+async function canvasBytes(c, type, q) { const b = await canvasBlob(c, type, q); c.width = c.height = 0; return new Uint8Array(await b.arrayBuffer()); }
+function natDims(im) { const k = Math.min(1, MAXPX / Math.max(im.naturalWidth, im.naturalHeight)); return {w: Math.round(im.naturalWidth * k), h: Math.round(im.naturalHeight * k)}; }
+function imgCanvas(im, rot, max = MAXPX) {
+  let w = im.naturalWidth, h = im.naturalHeight; const k = Math.min(1, max / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
   const side = rot % 180 !== 0, c = document.createElement('canvas'); c.width = side ? h : w; c.height = side ? w : h;
   const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
   x.translate(c.width / 2, c.height / 2); x.rotate(rot * Math.PI / 180); x.drawImage(im, -w / 2, -h / 2, w, h);
@@ -503,63 +609,117 @@ async function pdfPageCanvas(src, i, rot, scale) {
 }
 const pageCanvas = async p => p.src.kind === 'img' ? imgCanvas(p.src.img, p.rot) : (await pdfPageCanvas(p.src, p.i, p.rot, 2)).c;
 
-async function buildPdf(list) {
+async function buildPdf(list, job) {
   const {PDFDocument, degrees} = PDFLib;
   const out = await PDFDocument.create(); const docs = new Map(), imgs = new Map();
-  const a4 = S.opt.size === 'a4';
+  const a4 = S.opt.size === 'a4', cq = Q[S.opt.q] || null;
   for (const [n, p] of list.entries()) {
-    toast(`กำลังสร้าง PDF · หน้า ${n + 1}/${list.length}`, {prog: n / list.length, stay: true});
+    prog(`หน้า ${n + 1} จาก ${list.length}`, n / list.length, job);
     if (p.src.kind === 'pdf') {
-      let d = docs.get(p.src);
-      if (d === undefined) { try { d = p.src.locked ? null : await PDFDocument.load(p.src.buf); } catch (e) { d = null; } docs.set(p.src, d); }
+      let d = null;
+      if (!cq && !p.src.locked) { d = docs.get(p.src); if (d === undefined) { try { d = await PDFDocument.load(p.src.buf); } catch (e) { d = null; } docs.set(p.src, d); } }
       if (d) {
         const [pg] = await out.copyPages(d, [p.i - 1]);
         pg.setRotation(degrees((pg.getRotation().angle + p.rot) % 360)); out.addPage(pg);
-      } else { // encrypted PDF: draw the decrypted page as an image
-        const {c, scale} = await pdfPageCanvas(p.src, p.i, p.rot, 2.5);
-        const im = await out.embedJpg(new Uint8Array(await (await canvasBlob(c, 'image/jpeg', .9)).arrayBuffer()));
+      } else { // compressed, or encrypted: draw the page as an image
+        const v0 = (await p.src.doc.getPage(p.i)).getViewport({scale: 1});
+        const {c, scale} = await pdfPageCanvas(p.src, p.i, p.rot, cq ? cq.px / Math.max(v0.width, v0.height) : 2.5);
         const W = c.width / scale, H = c.height / scale;
-        out.addPage([W, H]).drawImage(im, {x: 0, y: 0, width: W, height: H}); c.width = c.height = 0;
+        const im = await out.embedJpg(await canvasBytes(c, 'image/jpeg', cq ? cq.q : .9));
+        out.addPage([W, H]).drawImage(im, {x: 0, y: 0, width: W, height: H});
       }
     } else {
       let im = imgs.get(p.src);
       if (!im) {
-        const png = /png/i.test(p.src.type), c = imgCanvas(p.src.img, 0);
-        const bytes = new Uint8Array(await (await canvasBlob(c, png ? 'image/png' : 'image/jpeg', .92)).arrayBuffer());
-        c.width = c.height = 0;
+        const png = !cq && /png/i.test(p.src.type);
+        const bytes = await canvasBytes(imgCanvas(p.src.img, 0, cq ? cq.px : MAXPX), png ? 'image/png' : 'image/jpeg', cq ? cq.q : .92);
         im = png ? await out.embedPng(bytes) : await out.embedJpg(bytes); imgs.set(p.src, im);
       }
-      const w = im.width, h = im.height; let pw = w, ph = h, x = 0, y = 0, dw = w, dh = h;
+      const {w, h} = natDims(p.src.img); let pw = w, ph = h, x = 0, y = 0, dw = w, dh = h;
       if (a4) { const land = w > h; pw = land ? 842 : 595; ph = land ? 595 : 842; const m = 24, s = Math.min((pw - 2 * m) / w, (ph - 2 * m) / h); dw = w * s; dh = h * s; x = (pw - dw) / 2; y = (ph - dh) / 2; }
       const pg = out.addPage([pw, ph]); pg.drawImage(im, {x, y, width: dw, height: dh}); pg.setRotation(degrees(p.rot));
     }
   }
-  toast('เกือบเสร็จแล้ว…', {prog: 1, stay: true});
+  prog('เกือบเสร็จแล้ว…', 1, job);
   return out.save();
 }
-async function saveImages(list) {
+async function buildImages(list, job) {
   const jpg = S.opt.fmt === 'jpg', type = jpg ? 'image/jpeg' : 'image/png', ext = jpg ? 'jpg' : 'png', name = baseName(), total = list.length;
-  if (total === 1) { toast('กำลังสร้างรูป…', {prog: .5, stay: true}); const b = await canvasBlob(await pageCanvas(list[0]), type, .92); setBusy(false); return save(`${name}.${ext}`, b); }
+  if (total === 1) { prog('กำลังสร้างรูป', .5, job); return {blob: await canvasBlob(await pageCanvas(list[0]), type, .92), name: `${name}.${ext}`}; }
   const zip = new JSZip(), pad = String(total).length;
   for (const [n, p] of list.entries()) {
-    toast(`กำลังสร้างรูป · หน้า ${n + 1}/${total}`, {prog: n / total, stay: true});
+    prog(`รูปที่ ${n + 1} จาก ${total}`, n / total, job);
     const c = await pageCanvas(p);
     zip.file(`${name}-${String(n + 1).padStart(pad, '0')}.${ext}`, await canvasBlob(c, type, .92)); c.width = c.height = 0;
   }
-  toast('กำลังรวมเป็น .zip…', {prog: 1, stay: true});
-  const z = await zip.generateAsync({type: 'blob'}); setBusy(false); return save(`${name}.zip`, z);
-}
-async function save(filename, data) {
-  try {
-    const blob = data instanceof Blob ? data : new Blob([data], {type: filename.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream'});
-    const url = URL.createObjectURL(blob), a = document.createElement('a');
-    a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    toast(`บันทึก ${filename} แล้ว ดูได้ในโฟลเดอร์ดาวน์โหลด`);
-  } catch (e) { toast('บันทึกไม่สำเร็จ ลองอีกครั้ง'); }
+  prog('กำลังรวมเป็น .zip…', 1, job);
+  return {blob: await zip.generateAsync({type: 'blob'}), name: `${name}.zip`};
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#saveOv').hidden) $('#saveOv').hidden = true; else if (S.sel.size) { S.sel.clear(); render(); } } });
+/* ---- full-screen viewer ---- */
+const V = {k: 0, z: 1, nw: 1, nh: 1, w: 0, h: 0, url: null, tok: 0, tap: 0, tx: 0, ty: 0, sx: 0, sy: 0, gz: 1};
+const vImg = $('#vImg'), vSt = $('#vStage');
+function openViewer(k) { $('#toast').hidden = true; $('#vw').hidden = false; document.body.style.overflow = 'hidden'; showPage(k); }
+function closeViewer() { $('#vw').hidden = true; document.body.style.overflow = ''; if (V.url) { URL.revokeObjectURL(V.url); V.url = null; } vImg.removeAttribute('src'); render(); }
+async function showPage(k) {
+  const n = S.pages.length; if (!n) return closeViewer();
+  V.k = Math.max(0, Math.min(n - 1, k)); const p = S.pages[V.k], tok = ++V.tok; $('#vZ').textContent = '100%';
+  $('#vNum').textContent = `หน้า ${V.k + 1} / ${n}`; $('#vPrev').disabled = V.k === 0; $('#vNext').disabled = V.k === n - 1;
+  $('#vLoad').hidden = false; vImg.style.visibility = 'hidden';
+  try {
+    const target = Math.min(2600, Math.max(innerWidth, innerHeight) * Math.min(devicePixelRatio || 1, 2) * 1.6);
+    let c;
+    if (p.src.kind === 'img') c = imgCanvas(p.src.img, p.rot, target);
+    else { const v0 = (await p.src.doc.getPage(p.i)).getViewport({scale: 1}); c = (await pdfPageCanvas(p.src, p.i, p.rot, target / Math.max(v0.width, v0.height))).c; }
+    const blob = await canvasBlob(c, 'image/jpeg', .9); const nw = c.width, nh = c.height; c.width = c.height = 0;
+    if (tok !== V.tok) return;
+    if (V.url) URL.revokeObjectURL(V.url);
+    V.url = URL.createObjectURL(blob); vImg.src = V.url; V.nw = nw; V.nh = nh;
+    vSt.scrollTop = vSt.scrollLeft = 0; V.w = 0; layout(1);
+    vImg.style.visibility = ''; $('#vLoad').hidden = true;
+  } catch (e) { if (tok === V.tok) $('#vLoad').textContent = 'แสดงหน้านี้ไม่ได้'; }
+}
+function layout(z, ax, ay) {
+  const r = vSt.getBoundingClientRect(), px = ax === undefined ? r.width / 2 : ax - r.left, py = ay === undefined ? r.height / 2 : ay - r.top;
+  const fx = V.w ? (vSt.scrollLeft + px) / V.w : .5, fy = V.h ? (vSt.scrollTop + py) / V.h : .5;
+  const fit = Math.min((r.width - 24) / V.nw, (r.height - 24) / V.nh);
+  V.z = Math.max(1, Math.min(6, z)); V.w = V.nw * fit * V.z; V.h = V.nh * fit * V.z;
+  vImg.style.width = V.w + 'px'; vImg.style.height = V.h + 'px';
+  vSt.style.touchAction = V.z > 1.01 ? 'pan-x pan-y' : 'none';
+  vSt.scrollLeft = fx * V.w - px; vSt.scrollTop = fy * V.h - py;
+  $('#vZ').textContent = Math.round(V.z * 100) + '%';
+}
+$('#vClose').onclick = closeViewer;
+$('#vPrev').onclick = () => showPage(V.k - 1);
+$('#vNext').onclick = () => showPage(V.k + 1);
+$('#vIn').onclick = () => layout(V.z * 1.5);
+$('#vOut').onclick = () => layout(V.z / 1.5);
+$('#vRot').onclick = () => { snap(); const p = S.pages[V.k]; p.rot = (p.rot + 90) % 360; showPage(V.k); };
+$('#vDel').onclick = () => { snap(); const k = V.k; S.pages.splice(k, 1); toast(`ลบหน้า ${k + 1} แล้ว`, {undo: true}); if (!S.pages.length) closeViewer(); else showPage(k); };
+vSt.addEventListener('pointerdown', e => { V.sx = e.clientX; V.sy = e.clientY; });
+vSt.addEventListener('pointerup', e => {
+  const dx = e.clientX - V.sx, dy = e.clientY - V.sy, now = Date.now();
+  if (V.z <= 1.01 && Math.abs(dx) > 60 && Math.abs(dy) < 80) { showPage(V.k + (dx < 0 ? 1 : -1)); V.tap = 0; return; }
+  if (Math.hypot(dx, dy) < 12) {
+    if (now - V.tap < 320 && Math.hypot(e.clientX - V.tx, e.clientY - V.ty) < 30) { layout(V.z > 1.01 ? 1 : 2.5, e.clientX, e.clientY); V.tap = 0; }
+    else { V.tap = now; V.tx = e.clientX; V.ty = e.clientY; }
+  }
+});
+vSt.addEventListener('wheel', e => { if (e.ctrlKey) { e.preventDefault(); layout(V.z * Math.exp(-e.deltaY / 200), e.clientX, e.clientY); } }, {passive: false});
+// Safari pinch gestures (iPhone / iPad / Mac trackpad)
+vSt.addEventListener('gesturestart', e => { e.preventDefault(); V.gz = V.z; });
+vSt.addEventListener('gesturechange', e => { e.preventDefault(); layout(V.gz * e.scale, e.clientX, e.clientY); });
+vSt.addEventListener('gestureend', e => e.preventDefault());
+addEventListener('resize', () => { if (!$('#vw').hidden) layout(V.z); });
+
+document.addEventListener('keydown', e => {
+  if (!$('#vw').hidden) {
+    if (e.key === 'Escape') closeViewer(); else if (e.key === 'ArrowLeft') showPage(V.k - 1); else if (e.key === 'ArrowRight') showPage(V.k + 1);
+    else if (e.key === '+' || e.key === '=') layout(V.z * 1.5); else if (e.key === '-') layout(V.z / 1.5);
+    return;
+  }
+  if (e.key === 'Escape') { if (!$('#saveOv').hidden) { if ($('#svBusy').hidden) closeSave(); } else if (S.sel.size) { S.sel.clear(); render(); } }
+});
 render();
 }
 </script>
