@@ -73,7 +73,7 @@ body.hot .hero{border-color:var(--em)}
 .deskbg{background:var(--desk);border-radius:24px;padding:clamp(12px,2.4vw,24px)}
 #grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:clamp(12px,2vw,20px)}
 .card{position:relative;display:flex;flex-direction:column;gap:8px;transition:transform .18s,opacity .18s}
-.sheetbox{position:relative;aspect-ratio:1/1.18;display:grid;place-items:center;border-radius:14px;background:var(--card);box-shadow:var(--sh);padding:12px;width:100%;transition:box-shadow .15s}
+.sheetbox{position:relative;cursor:grab;aspect-ratio:1/1.18;display:grid;place-items:center;border-radius:14px;background:var(--card);box-shadow:var(--sh);padding:12px;width:100%;transition:box-shadow .15s}
 .sheetbox img{max-width:100%;max-height:100%;object-fit:contain;transition:transform .25s;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.1);background:#fff;pointer-events:none;-webkit-user-drag:none;user-select:none}
 .sel .sheetbox{box-shadow:0 0 0 3px var(--em),var(--sh)}
 .chk{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.95);box-shadow:inset 0 0 0 2px #b9b9b9;display:grid;place-items:center;pointer-events:none}
@@ -87,7 +87,8 @@ body.hot .hero{border-color:var(--em)}
 .ib svg{width:21px;height:21px}
 .ib:hover:not(:disabled){background:var(--card)}
 .hd{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
-.card.drag{opacity:.3}
+.card.drag{opacity:.3;transform:scale(.94)}
+.card{-webkit-user-select:none;user-select:none}
 .card.over-l .sheetbox{box-shadow:-5px 0 0 var(--em),var(--sh)}
 .card.over-r .sheetbox{box-shadow:5px 0 0 var(--em),var(--sh)}
 .addtile{aspect-ratio:1/1.18;border-radius:14px;border:2px dashed light-dark(#c9c9c4,#2c5442);display:grid;place-items:center;align-content:center;gap:6px;color:var(--mut);font-weight:700;font-size:15px;width:100%}
@@ -200,7 +201,7 @@ body.hot .hero{border-color:var(--em)}
     </div>
     <ol class="steps">
       <li><b>1</b><div><strong>เพิ่มไฟล์</strong><span>รูปหรือ PDF กี่ไฟล์ก็ได้ ทุกหน้าจะเรียงต่อกัน</span></div></li>
-      <li><b>2</b><div><strong>จัดหน้า</strong><span>แตะเพื่อเลือก ลาก ⠿ เพื่อย้าย หมุนหรือลบ</span></div></li>
+      <li><b>2</b><div><strong>จัดหน้า</strong><span>แตะเพื่อเลือก กดค้างแล้วลากเพื่อย้าย หมุนหรือลบ</span></div></li>
       <li><b>3</b><div><strong>บันทึก</strong><span>เป็น PDF ไฟล์เดียว หรือแยกเป็นรูปทีละหน้า</span></div></li>
     </ol>
     <p class="safe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>ไฟล์ทำงานในเครื่องนี้เท่านั้น ไม่ถูกอัปโหลดไปไหน</p>
@@ -209,7 +210,7 @@ body.hot .hero{border-color:var(--em)}
   <section id="work" hidden>
     <div class="wtop">
       <h2 id="wCount">0 หน้า</h2>
-      <p id="wHint">แตะเพื่อเลือก · แตะค้างเพื่อดูเต็มจอ · ลาก ⠿ เพื่อย้าย</p>
+      <p id="wHint">แตะเพื่อเลือก · กดค้างแล้วลากเพื่อย้าย · กดค้างแล้วปล่อยเพื่อดูเต็มจอ</p>
       <span class="sp"></span>
       <button class="link" id="selAll">เลือกทั้งหมด</button>
       <button class="link" id="clear">เริ่มใหม่</button>
@@ -432,7 +433,7 @@ function render() {
     return `<li class="card${on ? ' sel' : ''}" data-id="${p.id}">
       <button class="sheetbox" data-a="s" aria-pressed="${on}" aria-label="หน้า ${k + 1} แตะเพื่อเลือก"><img src="${p.thumb}" alt="" style="transform:rotate(${p.rot}deg)${p.rot % 180 ? ';max-width:80%;max-height:80%' : ''}"></button>
       <span class="num">${k + 1}</span><span class="chk">${IC.ok}</span>${p.src.locked ? '<span class="tag">ปลดล็อกแล้ว</span>' : ''}
-      <div class="tools"><span class="ib hd" aria-label="ลากเพื่อย้าย" title="ลากเพื่อย้าย">${IC.hd}</span><span class="nm" title="${esc(p.label)}">${esc(p.label)}</span><button class="ib" data-a="v" aria-label="ดูหน้า ${k + 1} แบบเต็มจอ" title="ดูเต็มจอ">${IC.zoom}</button><button class="ib" data-a="r" aria-label="หมุนหน้า ${k + 1}" title="หมุน">${IC.rot}</button><button class="ib" data-a="d" aria-label="ลบหน้า ${k + 1}" title="ลบ">${IC.del}</button></div>
+      <div class="tools"><span class="nm" title="${esc(p.label)}">${esc(p.label)}</span><button class="ib" data-a="v" aria-label="ดูหน้า ${k + 1} แบบเต็มจอ" title="ดูเต็มจอ">${IC.zoom}</button><button class="ib" data-a="r" aria-label="หมุนหน้า ${k + 1}" title="หมุน">${IC.rot}</button><button class="ib" data-a="d" aria-label="ลบหน้า ${k + 1}" title="ลบ">${IC.del}</button></div>
     </li>`;
   }).join('') + (n ? `<li><button class="addtile" data-a="add">${IC.plus}เพิ่มไฟล์</button></li>` : '');
   setBusy(S.busy);
@@ -445,8 +446,7 @@ function setBusy(b) {
 /* ---- card actions ---- */
 const idx = id => S.pages.findIndex(p => p.id === +id);
 grid.addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b || S.busy || drag.moved) return;
-  if (lp.fired) { lp.fired = false; return; }
+  const b = e.target.closest('button'); if (!b || S.busy || drag.block) return;
   if (b.dataset.a === 'add') return pick();
   const k = idx(b.closest('.card').dataset.id); if (k < 0) return;
   const a = b.dataset.a, id = S.pages[k].id;
@@ -457,50 +457,61 @@ grid.addEventListener('click', e => {
   if (a === 'd') { S.pages.splice(k, 1); render(); toast(`ลบหน้า ${k + 1} แล้ว`, {undo: true}); }
 });
 
-/* ---- long press a page to open the viewer ---- */
-const lp = {t: 0, x: 0, y: 0, fired: false};
+/* ---- press and hold, then drag to reorder (touch) · click-drag (mouse) ----
+   hold and release without moving opens the full-screen viewer */
+const drag = {id: null, cand: null, img: null, over: null, after: false, moved: false, held: false, block: false, raf: 0, y: 0, t: 0, sx: 0, sy: 0, ptr: null, type: ''};
 grid.addEventListener('pointerdown', e => {
-  const sb = e.target.closest('.sheetbox'); if (!sb || S.busy) return;
-  lp.fired = false; lp.x = e.clientX; lp.y = e.clientY; clearTimeout(lp.t);
-  lp.t = setTimeout(() => { lp.fired = true; const k = idx(sb.closest('.card').dataset.id); if (k >= 0) openViewer(k); }, 450);
+  const sb = e.target.closest('.sheetbox'); if (!sb || S.busy || e.button > 0) return;
+  clearTimeout(drag.t);
+  Object.assign(drag, {id: null, cand: sb.closest('.card'), sx: e.clientX, sy: e.clientY, moved: false, held: false, ptr: e.pointerId, type: e.pointerType});
+  if (e.pointerType !== 'mouse') drag.t = setTimeout(() => { drag.held = true; lift(drag.sx, drag.sy); }, 400);
 });
-grid.addEventListener('pointermove', e => { if (lp.t && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 10) { clearTimeout(lp.t); lp.t = 0; } });
-for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) grid.addEventListener(ev, () => { clearTimeout(lp.t); lp.t = 0; });
-grid.addEventListener('contextmenu', e => { if (e.target.closest('.sheetbox')) e.preventDefault(); });
-
-/* ---- drag to reorder (pointer events: mouse + iPhone touch) ---- */
-const drag = {id: null, img: null, over: null, after: false, moved: false, raf: 0, y: 0};
-grid.addEventListener('pointerdown', e => {
-  const h = e.target.closest('.hd'); if (!h || S.busy) return;
-  e.preventDefault();
-  const card = h.closest('.card'); drag.id = card.dataset.id; drag.moved = false;
-  h.setPointerCapture(e.pointerId);
+function lift(x, y) {
+  const card = drag.cand; if (!card || !card.isConnected) return;
+  drag.id = card.dataset.id; card.classList.add('drag');
   const g = document.createElement('img'); g.className = 'dragimg'; g.src = card.querySelector('img').src;
-  g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px'; document.body.appendChild(g); drag.img = g;
-  card.classList.add('drag');
-});
-grid.addEventListener('pointermove', e => {
-  if (!drag.id) return;
-  drag.moved = true; drag.img.style.left = e.clientX + 'px'; drag.img.style.top = e.clientY + 'px'; drag.y = e.clientY;
+  g.style.left = x + 'px'; g.style.top = y + 'px'; document.body.appendChild(g); drag.img = g;
+  try { grid.setPointerCapture(drag.ptr); } catch (e) {}
+  if (navigator.vibrate) navigator.vibrate(12);
+}
+// stop the page from scrolling while a page is being dragged by finger
+grid.addEventListener('touchmove', e => { if (drag.id) e.preventDefault(); }, {passive: false});
+addEventListener('pointermove', e => {
+  if (e.pointerId !== drag.ptr || !drag.cand) return;
+  const d = Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy);
+  if (!drag.id) {
+    if (drag.type === 'mouse' && (e.buttons & 1) && d > 6) lift(e.clientX, e.clientY);
+    else if (d > 10) { clearTimeout(drag.t); drag.cand = null; } // finger is scrolling, not holding
+    if (!drag.id) return;
+  }
+  if (d > 6) drag.moved = true;
+  drag.img.style.left = e.clientX + 'px'; drag.img.style.top = e.clientY + 'px'; drag.y = e.clientY;
   const el = document.elementFromPoint(e.clientX, e.clientY), c = el && el.closest('.card');
   if (drag.over) drag.over.classList.remove('over-l', 'over-r');
   drag.over = c && c.dataset.id !== drag.id ? c : null;
   if (drag.over) { const r = drag.over.getBoundingClientRect(); drag.after = e.clientX > r.left + r.width / 2; drag.over.classList.add(drag.after ? 'over-r' : 'over-l'); }
   if (!drag.raf) { const step = () => { if (!drag.id) { drag.raf = 0; return; } if (drag.y < 80) scrollBy(0, -14); else if (drag.y > innerHeight - 110) scrollBy(0, 14); drag.raf = requestAnimationFrame(step); }; drag.raf = requestAnimationFrame(step); }
 });
-function endDrag() {
-  if (!drag.id) return;
-  if (drag.img) drag.img.remove();
-  if (drag.over) {
-    snap(); const item = S.pages.splice(idx(drag.id), 1)[0];
-    let to = idx(drag.over.dataset.id); if (drag.after) to++;
-    S.pages.splice(to, 0, item);
+function endDrag(e, cancelled) {
+  clearTimeout(drag.t);
+  if (e.pointerId !== drag.ptr) return;
+  const id = drag.id, peek = id && drag.held && !drag.moved && !cancelled;
+  if (id) {
+    if (drag.img) drag.img.remove();
+    if (drag.over && drag.moved && !cancelled) {
+      snap(); const item = S.pages.splice(idx(id), 1)[0];
+      let to = idx(drag.over.dataset.id); if (drag.after) to++;
+      S.pages.splice(to, 0, item);
+    }
+    drag.block = true; setTimeout(() => { drag.block = false; }, 60);
   }
-  drag.id = null; drag.over = null; drag.img = null; render();
-  setTimeout(() => { drag.moved = false; }, 0);
+  Object.assign(drag, {id: null, cand: null, over: null, img: null, ptr: null});
+  if (id) render();
+  if (peek) openViewer(idx(id));
 }
-grid.addEventListener('pointerup', endDrag);
-grid.addEventListener('pointercancel', endDrag);
+addEventListener('pointerup', e => endDrag(e, false));
+addEventListener('pointercancel', e => endDrag(e, true));
+grid.addEventListener('contextmenu', e => { if (e.target.closest('.sheetbox')) e.preventDefault(); });
 
 /* ---- selection ---- */
 $('#selAll').onclick = () => { if (S.sel.size === S.pages.length) S.sel.clear(); else S.pages.forEach(p => S.sel.add(p.id)); render(); };
