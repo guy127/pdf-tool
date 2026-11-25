@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#00a86b">
+<meta name="apple-mobile-web-app-title" content="จัดหน้า PDF">
+<meta name="description" content="รวมรูปเป็น PDF แยก PDF เป็นรูป เรียง หมุน ลบหน้า ทำงานในเครื่อง ไม่อัปโหลดไฟล์">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='9' y='5' width='22' height='28' rx='3' fill='%23ffd6e0' transform='rotate(-8 20 19)'/%3E%3Crect x='10' y='7' width='22' height='28' rx='3' fill='%2300a86b'/%3E%3C/svg%3E">
+<title>จัดหน้า PDF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Schibsted+Grotesk:wght@500;700;800&display=swap">
+<style>
+/* VOICE: friendly pocket tool — calm, clear, one obvious next step
+   IDEA: a pharmacy label / medicine box — flat rectangles, paper pages on a counter
+   PICTURE: the pages themselves as paper sheets; empty state is a fan of pages on a pink block
+   COLOUR and TYPE: white, emerald #00a86b, pale pink #ffd6e0, black; Schibsted Grotesk + Anuphan
+   LAYOUT: slim header, grid of pages, floating bottom bar for thumbs, save sheet from the bottom */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#04140d);--ink:light-dark(#0b0b0b,#eef6f1);--mut:light-dark(#5b5b5b,#9fbcae);
+--em:#00a86b;--emd:light-dark(#008a58,#2fd196);--pk:light-dark(#ffd6e0,#3a1f27);--pkink:light-dark(#0b0b0b,#ffe3ea);
+--card:light-dark(#ffffff,#0a2018);--line:light-dark(#e6e6e3,#1b3a2c);--desk:light-dark(#f4f3f0,#071a11);
+--bar:light-dark(#0b0b0b,#eef6f1);--barink:light-dark(#ffffff,#04140d);--sh:0 1px 2px rgba(0,0,0,.08),0 6px 18px rgba(0,0,0,.08)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Schibsted Grotesk","Anuphan",system-ui,sans-serif;overflow-x:clip;padding-bottom:120px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 max(4vw,14px)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation;border:0;background:none;padding:0}
+button:disabled{opacity:.4;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--em);outline-offset:2px}
+.btn{min-height:48px;padding:0 18px;border-radius:999px;font-weight:700;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn svg{width:20px;height:20px;flex:none}
+.pri{background:var(--em);color:#fff}
+.pri:hover:not(:disabled){background:#009660}
+.ghost{background:transparent;color:inherit;box-shadow:inset 0 0 0 2px currentColor}
+
+/* header */
+header{border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;gap:12px;min-height:72px}
+.logo{width:40px;height:40px;flex:none}
+.ttl{flex:1}
+h1{font-size:22px;line-height:1.1;margin:0;font-weight:800}
+.ttl p{margin:2px 0 0;font-size:13px;color:var(--mut)}
+#undoTop{min-height:44px;padding:0 14px;font-size:15px}
+
+/* empty state */
+#empty{padding:clamp(18px,4vw,48px) 0}
+.hero{background:var(--pk);color:var(--pkink);border-radius:24px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center;gap:clamp(16px,4vw,48px);padding:clamp(24px,5vw,64px);cursor:pointer;border:3px dashed transparent;transition:border-color .2s}
+body.hot .hero{border-color:var(--em)}
+.hero h2{font-size:clamp(32px,5vw,50px);line-height:1.05;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero p{margin:0 0 22px;font-size:17px;max-width:34ch}
+.hero .btn{min-height:56px;padding:0 26px;font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.chips span{font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px;background:light-dark(rgba(255,255,255,.7),rgba(0,0,0,.25))}
+.art{width:100%;max-width:420px;justify-self:center}
+.steps{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.steps li{background:var(--desk);border-radius:16px;padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
+.steps b{flex:none;width:30px;height:30px;border-radius:50%;background:var(--bar);color:var(--barink);display:grid;place-items:center;font-size:15px}
+.steps strong{display:block;font-size:16px}
+.steps span{font-size:14px;color:var(--mut)}
+.safe{margin:16px 0 0;font-size:14px;color:var(--mut);display:flex;gap:8px;align-items:center}
+.safe svg{width:18px;height:18px;flex:none;color:var(--emd)}
+
+/* workspace */
+#work{padding:18px 0}
+.wtop{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.wtop h2{margin:0;font-size:28px;line-height:1.1;font-weight:800}
+.wtop p{margin:0;color:var(--mut);font-size:14px}
+.wtop .sp{flex:1}
+.link{font-weight:700;color:var(--emd);min-height:44px;padding:0 6px;font-size:15px}
+.deskbg{background:var(--desk);border-radius:24px;padding:clamp(12px,2.4vw,24px)}
+#grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:clamp(12px,2vw,20px)}
+.card{position:relative;display:flex;flex-direction:column;gap:8px;transition:transform .18s,opacity .18s}
+.sheetbox{position:relative;aspect-ratio:1/1.18;display:grid;place-items:center;border-radius:14px;background:var(--card);box-shadow:var(--sh);padding:12px;width:100%;transition:box-shadow .15s}
+.sheetbox img{max-width:100%;max-height:100%;object-fit:contain;transition:transform .25s;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.1);background:#fff;pointer-events:none;-webkit-user-drag:none;user-select:none}
+.sel .sheetbox{box-shadow:0 0 0 3px var(--em),var(--sh)}
+.chk{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.95);box-shadow:inset 0 0 0 2px #b9b9b9;display:grid;place-items:center;pointer-events:none}
+.chk svg{width:16px;height:16px;color:#fff;opacity:0}
+.sel .chk{background:var(--em);box-shadow:none}.sel .chk svg{opacity:1}
+.num{position:absolute;top:8px;left:8px;min-width:28px;height:28px;padding:0 8px;border-radius:999px;background:var(--bar);color:var(--barink);font-size:14px;font-weight:700;display:grid;place-items:center;pointer-events:none}
+.tag{position:absolute;bottom:8px;left:8px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--pk);color:var(--pkink);pointer-events:none}
+.tools{display:flex;align-items:center;gap:2px}
+.tools .nm{flex:1;font-size:12.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:4px}
+.ib{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:var(--ink)}
+.ib svg{width:21px;height:21px}
+.ib:hover:not(:disabled){background:var(--card)}
+.hd{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.card.drag{opacity:.3}
+.card.over-l .sheetbox{box-shadow:-5px 0 0 var(--em),var(--sh)}
+.card.over-r .sheetbox{box-shadow:5px 0 0 var(--em),var(--sh)}
+.addtile{aspect-ratio:1/1.18;border-radius:14px;border:2px dashed light-dark(#c9c9c4,#2c5442);display:grid;place-items:center;align-content:center;gap:6px;color:var(--mut);font-weight:700;font-size:15px;width:100%}
+.addtile svg{width:32px;height:32px}
+.addtile:hover{border-color:var(--em);color:var(--emd)}
+.dragimg{position:fixed;z-index:40;width:84px;pointer-events:none;border-radius:6px;box-shadow:0 14px 30px rgba(0,0,0,.3);background:#fff;transform:translate(-50%,-70%) rotate(-4deg)}
+
+/* bottom bar */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 12px calc(12px + env(safe-area-inset-bottom));pointer-events:none}
+.dock>div{pointer-events:auto;max-width:640px;margin:0 auto;background:var(--bar);color:var(--barink);border-radius:22px;padding:8px;display:flex;align-items:center;gap:6px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.dock .btn{min-height:48px}
+.dock .ghost{box-shadow:none;background:light-dark(rgba(255,255,255,.12),rgba(0,0,0,.08))}
+.dock .grow{flex:1}
+.dock .cnt{flex:1;padding-left:10px;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock .del{background:#ffd6e0;color:#0b0b0b}
+.dock .ibw{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:light-dark(rgba(255,255,255,.12),rgba(0,0,0,.08))}
+.dock .ibw svg{width:22px;height:22px}
+[hidden]{display:none!important}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:25;width:min(560px,calc(100% - 24px));background:var(--card);color:var(--ink);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.18);border:1px solid var(--line);padding:10px 10px 10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#toast .tx{flex:1;font-size:15px;font-weight:600}
+#toast .prog{flex-basis:100%;height:6px;border-radius:999px;background:var(--line);overflow:hidden;margin:2px 6px 4px 0}
+#toast .prog i{display:block;height:100%;width:0;background:var(--em);transition:width .2s}
+
+/* sheets */
+.ov{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);color:var(--ink);width:min(560px,100%);border-radius:24px 24px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;animation:up .22s ease-out}
+@media(min-width:700px){.ov{align-items:center}.sheet{border-radius:24px;padding-bottom:24px}}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.grab{width:44px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.sheet h2{margin:0 0 4px;font-size:24px;line-height:1.15;font-weight:800}
+.sheet .lead{margin:0 0 18px;color:var(--mut);font-size:15px;overflow-wrap:anywhere}
+.opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.opt{border-radius:18px;padding:16px;text-align:left;background:var(--desk);box-shadow:inset 0 0 0 2px transparent;display:flex;flex-direction:column;gap:6px;min-height:120px}
+.opt svg{width:34px;height:34px;color:var(--emd)}
+.opt strong{font-size:17px}.opt span{font-size:13.5px;color:var(--mut);line-height:1.4}
+.opt[aria-pressed=true]{box-shadow:inset 0 0 0 3px var(--em);background:light-dark(#e9f8f1,#0b2a1d)}
+.fld{margin-bottom:16px}
+.fld>label,.fld>.lb{display:block;font-size:14px;font-weight:700;margin-bottom:6px}
+.seg{display:flex;background:var(--desk);border-radius:14px;padding:4px;gap:4px}
+.seg button{flex:1;min-height:44px;border-radius:10px;font-weight:700;font-size:15px;color:var(--mut)}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--ink);box-shadow:var(--sh)}
+.inp{display:flex;align-items:center;background:var(--desk);border-radius:14px;padding:0 14px}
+.inp input{flex:1;border:0;background:transparent;min-height:50px;font-size:16px;outline:none}
+.inp:focus-within{box-shadow:0 0 0 3px var(--em)}
+.inp em{font-style:normal;color:var(--mut);font-size:15px}
+.sum{display:flex;gap:10px;align-items:center;background:var(--pk);color:var(--pkink);border-radius:14px;padding:12px 14px;font-size:14.5px;margin-bottom:16px}
+.sum svg{width:20px;height:20px;flex:none}
+.row{display:flex;gap:10px}.row .btn{flex:1}
+.err{color:#d0123f;font-weight:700;font-size:14px;margin:-8px 0 12px}
+@media(max-width:700px){
+  .hero{grid-template-columns:minmax(0,1fr);text-align:center}.hero p{margin-inline:auto}.chips{justify-content:center}
+  .art{order:-1;max-width:260px}
+  .steps{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:600px){
+  #grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tools .nm{display:none}.tools{justify-content:space-between}
+  .ttl p{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><rect x="9" y="5" width="22" height="28" rx="3" fill="#ffd6e0" transform="rotate(-8 20 19)"/><rect x="10" y="7" width="22" height="28" rx="3" fill="#00a86b"/><rect x="14" y="13" width="14" height="2.6" rx="1.3" fill="#fff"/><rect x="14" y="18.5" width="10" height="2.6" rx="1.3" fill="#fff"/><rect x="14" y="24" width="12" height="2.6" rx="1.3" fill="#fff"/></svg>
+  <div class="ttl"><h1>จัดหน้า PDF</h1><p>รูป ⇄ PDF · เรียง หมุน ลบ แยกหน้า</p></div>
+  <button id="undoTop" class="btn ghost" hidden>ย้อนกลับ</button>
+</div></header>
+
+<main class="wrap">
+  <section id="empty">
+    <div class="hero" id="heroDrop" role="button" tabindex="0" aria-label="เลือกไฟล์">
+      <div>
+        <h2>รวมรูปเป็น PDF หรือแยก PDF เป็นรูป</h2>
+        <p>เลือกไฟล์จากเครื่องหรืออัลบั้มรูป แล้วจัดหน้าได้ตามใจ ใช้บนมือถือได้เลย</p>
+        <span class="btn pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>เลือกไฟล์</span>
+        <div class="chips"><span>JPG</span><span>PNG</span><span>HEIC (iPhone)</span><span>WebP</span><span>PDF</span><span>PDF มีรหัสผ่าน</span></div>
+      </div>
+      <svg class="art" viewBox="0 0 400 300" aria-hidden="true">
+        <ellipse cx="200" cy="272" rx="150" ry="14" fill="rgba(0,0,0,.08)"/>
+        <g transform="rotate(-14 200 260)"><rect x="70" y="40" width="150" height="200" rx="10" fill="#fff" stroke="#0b0b0b" stroke-width="3"/><rect x="92" y="66" width="106" height="66" rx="6" fill="#ffd6e0"/><rect x="92" y="148" width="90" height="9" rx="4.5" fill="#d9d9d9"/><rect x="92" y="168" width="70" height="9" rx="4.5" fill="#d9d9d9"/></g>
+        <g transform="rotate(10 200 260)"><rect x="180" y="40" width="150" height="200" rx="10" fill="#fff" stroke="#0b0b0b" stroke-width="3"/><circle cx="235" cy="96" r="24" fill="#00a86b"/><path d="M200 160l34-30 26 22 18-14 32 22v30H200z" fill="#bfe9d6"/></g>
+        <g><rect x="125" y="28" width="150" height="200" rx="10" fill="#fff" stroke="#0b0b0b" stroke-width="3"/><rect x="125" y="28" width="150" height="46" rx="10" fill="#00a86b"/><rect x="125" y="62" width="150" height="12" fill="#00a86b"/><text x="200" y="59" text-anchor="middle" font-family="Schibsted Grotesk,sans-serif" font-weight="800" font-size="24" fill="#fff">PDF</text><rect x="147" y="96" width="106" height="9" rx="4.5" fill="#d9d9d9"/><rect x="147" y="116" width="86" height="9" rx="4.5" fill="#d9d9d9"/><rect x="147" y="136" width="96" height="9" rx="4.5" fill="#d9d9d9"/><rect x="147" y="168" width="60" height="38" rx="6" fill="#ffd6e0"/></g>
+        <circle cx="318" cy="210" r="30" fill="#0b0b0b"/><path d="M318 196v28M304 210h28" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <ol class="steps">
+      <li><b>1</b><div><strong>เพิ่มไฟล์</strong><span>รูปหรือ PDF กี่ไฟล์ก็ได้ ทุกหน้าจะเรียงต่อกัน</span></div></li>
+      <li><b>2</b><div><strong>จัดหน้า</strong><span>แตะเพื่อเลือก ลาก ⠿ เพื่อย้าย หมุนหรือลบ</span></div></li>
+      <li><b>3</b><div><strong>บันทึก</strong><span>เป็น PDF ไฟล์เดียว หรือแยกเป็นรูปทีละหน้า</span></div></li>
+    </ol>
+    <p class="safe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>ไฟล์ทำงานในเครื่องนี้เท่านั้น ไม่ถูกอัปโหลดไปไหน</p>
+  </section>
+
+  <section id="work" hidden>
+    <div class="wtop">
+      <h2 id="wCount">0 หน้า</h2>
+      <p id="wHint">แตะหน้าเพื่อเลือก · ลาก ⠿ เพื่อย้าย</p>
+      <span class="sp"></span>
+      <button class="link" id="selAll">เลือกทั้งหมด</button>
+      <button class="link" id="clear">เริ่มใหม่</button>
+    </div>
+    <div class="deskbg"><ol id="grid"></ol></div>
+  </section>
+  <input type="file" id="file" accept="image/*,.heic,.heif,application/pdf,.pdf" multiple hidden>
+</main>
+
+<div class="dock" id="dockMain" hidden><div>
+  <button class="btn ghost" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>เพิ่ม</button>
+  <button class="btn pri grow" id="saveBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>บันทึก</button>
+</div></div>
+<div class="dock" id="dockSel" hidden><div>
+  <span class="cnt" id="selN">เลือก 0</span>
+  <button class="ibw" id="sRot" aria-label="หมุนหน้าที่เลือก"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+  <button class="ibw" id="sSave" aria-label="บันทึกเฉพาะหน้าที่เลือก"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
+  <button class="btn del" id="sDel">ลบ</button>
+  <button class="ibw" id="sNone" aria-label="ยกเลิกการเลือก"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div></div>
+
+<div id="toast" hidden role="status" aria-live="polite"><span class="tx" id="tTx"></span><button class="btn ghost" id="tUndo" style="min-height:40px" hidden>ย้อนกลับ</button><div class="prog" id="tProg" hidden><i id="tBar"></i></div></div>
+
+<div class="ov" id="saveOv" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="svT">
+  <div class="grab"></div>
+  <h2 id="svT">บันทึกไฟล์</h2>
+  <p class="lead" id="svLead"></p>
+  <div class="opts">
+    <button class="opt" data-k="pdf" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h4"/></svg><strong>PDF ไฟล์เดียว</strong><span>รวมทุกหน้าตามลำดับ</span></button>
+    <button class="opt" data-k="img" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg><strong>รูปภาพ</strong><span>แยกเป็นรูปทีละหน้า</span></button>
+  </div>
+  <div class="fld" id="fSize"><span class="lb">ขนาดหน้าสำหรับรูป</span><div class="seg" data-g="size"><button data-v="a4" aria-pressed="true">A4</button><button data-v="fit" aria-pressed="false">เท่ากับรูป</button></div></div>
+  <div class="fld" id="fFmt" hidden><span class="lb">ชนิดรูป</span><div class="seg" data-g="fmt"><button data-v="jpg" aria-pressed="true">JPG · ไฟล์เล็ก</button><button data-v="png" aria-pressed="false">PNG · คมชัด</button></div></div>
+  <div class="fld"><label for="fname">ชื่อไฟล์</label><div class="inp"><input id="fname" value="เอกสาร" autocomplete="off" enterkeyhint="done"><em id="ext">.pdf</em></div></div>
+  <div class="sum" id="sum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="sumTx"></span></div>
+  <div class="row"><button class="btn ghost" id="svCancel">ยกเลิก</button><button class="btn pri" id="svGo">บันทึก</button></div>
+</div></div>
+
+<div class="ov" id="pwOv" hidden><form class="sheet" id="pwForm" role="dialog" aria-modal="true" aria-labelledby="pwT">
+  <div class="grab"></div>
+  <h2 id="pwT">ไฟล์นี้มีรหัสผ่าน</h2>
+  <p class="lead" id="pwName"></p>
+  <div class="fld"><div class="inp"><input type="password" id="pwIn" autocomplete="off" aria-label="รหัสผ่าน PDF" placeholder="ใส่รหัสผ่าน" enterkeyhint="go"></div></div>
+  <p class="err" id="pwErr" hidden>รหัสไม่ถูก ลองอีกครั้ง</p>
+  <div class="sum"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>ไฟล์ที่บันทึกออกไปจะไม่มีรหัส และหน้าจะเป็นภาพ (คัดลอกข้อความไม่ได้)</span></div>
+  <div class="row"><button type="button" class="btn ghost" id="pwSkip">ข้ามไฟล์นี้</button><button type="submit" class="btn pri">เปิด</button></div>
+</form></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+{
+const $ = s => document.querySelector(s);
+const S = {pages: [], hist: [], sel: new Set(), dl: null, busy: false, opt: {k: 'pdf', size: 'a4', fmt: 'jpg'}, scope: null};
+let uid = 0;
+const grid = $('#grid'), fileIn = $('#file');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const MAXPX = 4096; // keeps canvases inside iPhone memory limits
+const IC = {
+  rot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>',
+  del: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  hd: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.7"/><circle cx="15" cy="6" r="1.7"/><circle cx="9" cy="12" r="1.7"/><circle cx="15" cy="12" r="1.7"/><circle cx="9" cy="18" r="1.7"/><circle cx="15" cy="18" r="1.7"/></svg>',
+  ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
+};
+
+if (!window.pdfjsWorker && window['pdfjs-dist/build/pdf.worker']) window.pdfjsWorker = window['pdfjs-dist/build/pdf.worker'];
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ---- toast ---- */
+let tTimer = 0;
+function toast(msg, {undo = false, prog = null, stay = false} = {}) {
+  clearTimeout(tTimer);
+  $('#toast').hidden = false; $('#tTx').textContent = msg; $('#tUndo').hidden = !undo;
+  $('#tProg').hidden = prog === null; if (prog !== null) $('#tBar').style.width = Math.round(prog * 100) + '%';
+  if (!stay) tTimer = setTimeout(() => { $('#toast').hidden = true; }, undo ? 6000 : 3200);
+}
+$('#tUndo').onclick = () => { undo(); $('#toast').hidden = true; };
+
+function snap() { S.hist.push(S.pages.map(p => ({...p}))); if (S.hist.length > 40) S.hist.shift(); }
+function undo() { if (!S.hist.length) return; S.pages = S.hist.pop(); render(); }
+function loadImg(url) { return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; }); }
+
+/* ---- HEIC: native first (Safari), else convert with heic2any ---- */
+let heicLib = null;
+function loadHeic() {
+  if (window.heic2any) return Promise.resolve(window.heic2any);
+  if (!heicLib) heicLib = new Promise((ok, no) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+    s.onload = () => window.heic2any ? ok(window.heic2any) : no(new Error('heic'));
+    s.onerror = () => { heicLib = null; no(new Error('heic')); };
+    document.head.appendChild(s);
+  });
+  return heicLib;
+}
+async function openImage(f, prog) {
+  const isHeic = /hei[cf]/i.test(f.type) || /\.hei[cf]$/i.test(f.name);
+  try { const url = URL.createObjectURL(f); return {img: await loadImg(url), url, type: f.type}; }
+  catch (e) { if (!isHeic) throw e; }
+  toast(`กำลังแปลง ${f.name} จาก HEIC…`, {prog, stay: true});
+  const conv = await loadHeic();
+  let out = await conv({blob: f, toType: 'image/jpeg', quality: 0.92});
+  if (Array.isArray(out)) out = out[0];
+  const url = URL.createObjectURL(out);
+  return {img: await loadImg(url), url, type: 'image/jpeg'};
+}
+
+/* ---- password ---- */
+function askPassword(name, wrong) {
+  return new Promise(res => {
+    $('#pwName').textContent = name; $('#pwErr').hidden = !wrong;
+    $('#pwIn').value = ''; $('#pwOv').hidden = false; setTimeout(() => $('#pwIn').focus(), 60);
+    const done = v => { $('#pwOv').hidden = true; $('#pwForm').onsubmit = null; $('#pwSkip').onclick = null; res(v); };
+    $('#pwForm').onsubmit = e => { e.preventDefault(); done($('#pwIn').value); };
+    $('#pwSkip').onclick = () => done(null);
+  });
+}
+async function openPdf(f, buf) {
+  const task = pdfjsLib.getDocument({data: new Uint8Array(buf.slice(0))});
+  let used = false, skipped = false;
+  task.onPassword = async (update, reason) => {
+    const pw = await askPassword(f.name, reason === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD);
+    if (pw === null) { skipped = true; task.destroy(); return; }
+    used = true; update(pw);
+  };
+  try { return {doc: await task.promise, locked: used}; }
+  catch (e) { if (skipped) return null; throw e; }
+}
+
+/* ---- add files ---- */
+async function addFiles(list) {
+  const files = [...list]; if (!files.length || S.busy) return;
+  snap(); setBusy(true); let added = 0, failed = [];
+  for (const [fi, f] of files.entries()) {
+    const base = fi / files.length, part = 1 / files.length;
+    try {
+      if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) {
+        toast(`กำลังเปิด ${f.name}`, {prog: base, stay: true});
+        const buf = await f.arrayBuffer();
+        const r = await openPdf(f, buf);
+        if (!r) continue;
+        const src = {kind: 'pdf', name: f.name, buf, doc: r.doc, locked: r.locked};
+        const N = r.doc.numPages;
+        for (let i = 1; i <= N; i++) {
+          toast(`กำลังอ่าน ${f.name} · หน้า ${i}/${N}`, {prog: base + part * i / N, stay: true});
+          const pg = await r.doc.getPage(i);
+          const v0 = pg.getViewport({scale: 1});
+          const vp = pg.getViewport({scale: 320 / Math.max(v0.width, v0.height)});
+          const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+          await pg.render({canvasContext: c.getContext('2d'), viewport: vp}).promise;
+          S.pages.push({id: ++uid, src, i, rot: 0, thumb: c.toDataURL('image/jpeg', .82), label: `${f.name} · ${i}`});
+          c.width = c.height = 0; added++; render();
+        }
+      } else if (f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp|hei[cf])$/i.test(f.name)) {
+        toast(`กำลังเปิด ${f.name}`, {prog: base, stay: true});
+        const {img, url, type} = await openImage(f, base);
+        S.pages.push({id: ++uid, src: {kind: 'img', name: f.name, img, type}, rot: 0, thumb: url, label: f.name});
+        added++; render();
+      } else failed.push(f.name);
+    } catch (e) { failed.push(f.name); }
+  }
+  setBusy(false); render();
+  if (failed.length) toast(`เปิดไม่ได้ ${failed.length} ไฟล์: ${failed.slice(0, 2).join(', ')}${failed.length > 2 ? '…' : ''}`);
+  else if (added) toast(`เพิ่ม ${added} หน้าแล้ว`);
+  else $('#toast').hidden = true;
+}
+
+/* ---- render ---- */
+function render() {
+  const n = S.pages.length;
+  for (const id of [...S.sel]) if (!S.pages.some(p => p.id === id)) S.sel.delete(id);
+  const m = S.sel.size;
+  $('#empty').hidden = n > 0; $('#work').hidden = !n;
+  $('#dockMain').hidden = !n || m > 0; $('#dockSel').hidden = !m;
+  $('#undoTop').hidden = !S.hist.length || !n && !S.hist.length;
+  $('#wCount').textContent = `${n} หน้า`;
+  $('#selAll').textContent = n && m === n ? 'ไม่เลือก' : 'เลือกทั้งหมด';
+  $('#selN').textContent = `เลือก ${m} หน้า`;
+  grid.innerHTML = S.pages.map((p, k) => {
+    const on = S.sel.has(p.id);
+    return `<li class="card${on ? ' sel' : ''}" data-id="${p.id}">
+      <button class="sheetbox" data-a="s" aria-pressed="${on}" aria-label="หน้า ${k + 1} แตะเพื่อเลือก"><img src="${p.thumb}" alt="" style="transform:rotate(${p.rot}deg)${p.rot % 180 ? ';max-width:80%;max-height:80%' : ''}"></button>
+      <span class="num">${k + 1}</span><span class="chk">${IC.ok}</span>${p.src.locked ? '<span class="tag">ปลดล็อกแล้ว</span>' : ''}
+      <div class="tools"><span class="ib hd" aria-label="ลากเพื่อย้าย" title="ลากเพื่อย้าย">${IC.hd}</span><span class="nm" title="${esc(p.label)}">${esc(p.label)}</span><button class="ib" data-a="r" aria-label="หมุนหน้า ${k + 1}" title="หมุน">${IC.rot}</button><button class="ib" data-a="d" aria-label="ลบหน้า ${k + 1}" title="ลบ">${IC.del}</button></div>
+    </li>`;
+  }).join('') + (n ? `<li><button class="addtile" data-a="add">${IC.plus}เพิ่มไฟล์</button></li>` : '');
+  setBusy(S.busy);
+}
+function setBusy(b) {
+  S.busy = b;
+  for (const el of document.querySelectorAll('.dock button,#selAll,#clear,#undoTop,#grid button')) el.disabled = b;
+}
+
+/* ---- card actions ---- */
+const idx = id => S.pages.findIndex(p => p.id === +id);
+grid.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || S.busy || drag.moved) return;
+  if (b.dataset.a === 'add') return pick();
+  const k = idx(b.closest('.card').dataset.id); if (k < 0) return;
+  const a = b.dataset.a, id = S.pages[k].id;
+  if (a === 's') { S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); render(); return; }
+  snap();
+  if (a === 'r') { S.pages[k].rot = (S.pages[k].rot + 90) % 360; render(); }
+  if (a === 'd') { S.pages.splice(k, 1); render(); toast(`ลบหน้า ${k + 1} แล้ว`, {undo: true}); }
+});
+
+/* ---- drag to reorder (pointer events: mouse + iPhone touch) ---- */
+const drag = {id: null, img: null, over: null, after: false, moved: false, raf: 0, y: 0};
+grid.addEventListener('pointerdown', e => {
+  const h = e.target.closest('.hd'); if (!h || S.busy) return;
+  e.preventDefault();
+  const card = h.closest('.card'); drag.id = card.dataset.id; drag.moved = false;
+  h.setPointerCapture(e.pointerId);
+  const g = document.createElement('img'); g.className = 'dragimg'; g.src = card.querySelector('img').src;
+  g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px'; document.body.appendChild(g); drag.img = g;
+  card.classList.add('drag');
+});
+grid.addEventListener('pointermove', e => {
+  if (!drag.id) return;
+  drag.moved = true; drag.img.style.left = e.clientX + 'px'; drag.img.style.top = e.clientY + 'px'; drag.y = e.clientY;
+  const el = document.elementFromPoint(e.clientX, e.clientY), c = el && el.closest('.card');
+  if (drag.over) drag.over.classList.remove('over-l', 'over-r');
+  drag.over = c && c.dataset.id !== drag.id ? c : null;
+  if (drag.over) { const r = drag.over.getBoundingClientRect(); drag.after = e.clientX > r.left + r.width / 2; drag.over.classList.add(drag.after ? 'over-r' : 'over-l'); }
+  if (!drag.raf) { const step = () => { if (!drag.id) { drag.raf = 0; return; } if (drag.y < 80) scrollBy(0, -14); else if (drag.y > innerHeight - 110) scrollBy(0, 14); drag.raf = requestAnimationFrame(step); }; drag.raf = requestAnimationFrame(step); }
+});
+function endDrag() {
+  if (!drag.id) return;
+  if (drag.img) drag.img.remove();
+  if (drag.over) {
+    snap(); const item = S.pages.splice(idx(drag.id), 1)[0];
+    let to = idx(drag.over.dataset.id); if (drag.after) to++;
+    S.pages.splice(to, 0, item);
+  }
+  drag.id = null; drag.over = null; drag.img = null; render();
+  setTimeout(() => { drag.moved = false; }, 0);
+}
+grid.addEventListener('pointerup', endDrag);
+grid.addEventListener('pointercancel', endDrag);
+
+/* ---- selection ---- */
+$('#selAll').onclick = () => { if (S.sel.size === S.pages.length) S.sel.clear(); else S.pages.forEach(p => S.sel.add(p.id)); render(); };
+$('#sNone').onclick = () => { S.sel.clear(); render(); };
+$('#sRot').onclick = () => { snap(); S.pages.forEach(p => { if (S.sel.has(p.id)) p.rot = (p.rot + 90) % 360; }); render(); };
+$('#sDel').onclick = () => { const m = S.sel.size; snap(); S.pages = S.pages.filter(p => !S.sel.has(p.id)); S.sel.clear(); render(); toast(`ลบ ${m} หน้าแล้ว`, {undo: true}); };
+$('#sSave').onclick = () => openSave(S.pages.filter(p => S.sel.has(p.id)));
+
+/* ---- add / reset ---- */
+const hasFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+document.addEventListener('dragover', e => { if (hasFiles(e)) { e.preventDefault(); document.body.classList.add('hot'); } });
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('hot'); });
+document.addEventListener('drop', e => { if (!hasFiles(e)) return; e.preventDefault(); document.body.classList.remove('hot'); addFiles(e.dataTransfer.files); });
+function pick() { if (!S.busy) fileIn.click(); }
+$('#heroDrop').onclick = pick; $('#heroDrop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } };
+$('#addBtn').onclick = pick;
+fileIn.onchange = () => { addFiles(fileIn.files); fileIn.value = ''; };
+$('#undoTop').onclick = () => { undo(); toast('ย้อนกลับแล้ว'); };
+$('#clear').onclick = () => { snap(); S.pages = []; S.sel.clear(); render(); toast('ล้างทุกหน้าแล้ว', {undo: true}); };
+
+/* ---- save sheet ---- */
+function openSave(scope) {
+  S.scope = scope; $('#saveOv').hidden = false; syncSave();
+}
+function syncSave() {
+  const o = S.opt, list = S.scope || S.pages, n = list.length, anyImg = list.some(p => p.src.kind === 'img'), anyLock = list.some(p => p.src.locked);
+  document.querySelectorAll('.opt').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === o.k));
+  document.querySelectorAll('.seg').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === o[g.dataset.g])));
+  $('#fSize').hidden = o.k !== 'pdf' || !anyImg; $('#fFmt').hidden = o.k !== 'img';
+  $('#svT').textContent = S.scope ? `บันทึก ${n} หน้าที่เลือก` : 'บันทึกไฟล์';
+  $('#svLead').textContent = S.scope ? 'บันทึกเฉพาะหน้าที่เลือกเป็นไฟล์ใหม่ ไฟล์อื่นไม่เปลี่ยน' : `ทั้งหมด ${n} หน้า ตามลำดับที่จัดไว้`;
+  const ext = o.k === 'pdf' ? 'pdf' : n > 1 ? 'zip' : o.fmt;
+  $('#ext').textContent = '.' + ext;
+  $('#sumTx').textContent = o.k === 'pdf'
+    ? `ได้ PDF 1 ไฟล์ ${n} หน้า${anyLock ? ' · หน้าที่ปลดล็อกจะเป็นภาพ' : ''}`
+    : n > 1 ? `ได้รูป ${n} รูป รวมอยู่ในไฟล์ .zip (แตะเปิดเพื่อแตกไฟล์)` : 'ได้รูป 1 รูป';
+}
+document.querySelectorAll('.opt').forEach(b => b.onclick = () => { S.opt.k = b.dataset.k; syncSave(); });
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { S.opt[b.parentNode.dataset.g] = b.dataset.v; syncSave(); });
+$('#saveBtn').onclick = () => openSave(null);
+$('#svCancel').onclick = () => { $('#saveOv').hidden = true; };
+$('#saveOv').onclick = e => { if (e.target.id === 'saveOv') $('#saveOv').hidden = true; };
+$('#fname').onkeydown = e => { if (e.key === 'Enter') $('#svGo').click(); };
+$('#svGo').onclick = async () => {
+  const list = S.scope || S.pages; $('#saveOv').hidden = true; setBusy(true);
+  try {
+    if (S.opt.k === 'pdf') { const bytes = await buildPdf(list); setBusy(false); await save(baseName() + '.pdf', bytes); }
+    else await saveImages(list);
+  } catch (e) { toast('สร้างไฟล์ไม่สำเร็จ ไฟล์ต้นทางอาจเสีย'); }
+  setBusy(false);
+};
+
+/* ---- export ---- */
+function baseName() { return ($('#fname').value.trim() || 'เอกสาร').replace(/[\\/:*?"<>|]+/g, '-').replace(/\.(pdf|zip|png|jpe?g)$/i, '').slice(0, 120); }
+function canvasBlob(c, type, q) { return new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('blob')), type, q)); }
+function imgCanvas(im, rot) {
+  let w = im.naturalWidth, h = im.naturalHeight; const k = Math.min(1, MAXPX / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
+  const side = rot % 180 !== 0, c = document.createElement('canvas'); c.width = side ? h : w; c.height = side ? w : h;
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.translate(c.width / 2, c.height / 2); x.rotate(rot * Math.PI / 180); x.drawImage(im, -w / 2, -h / 2, w, h);
+  return c;
+}
+async function pdfPageCanvas(src, i, rot, scale) {
+  const pg = await src.doc.getPage(i);
+  const v0 = pg.getViewport({scale: 1}); scale = Math.min(scale, MAXPX / Math.max(v0.width, v0.height));
+  const vp = pg.getViewport({scale, rotation: (pg.rotate + rot) % 360});
+  const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  await pg.render({canvasContext: x, viewport: vp}).promise; return {c, scale};
+}
+const pageCanvas = async p => p.src.kind === 'img' ? imgCanvas(p.src.img, p.rot) : (await pdfPageCanvas(p.src, p.i, p.rot, 2)).c;
+
+async function buildPdf(list) {
+  const {PDFDocument, degrees} = PDFLib;
+  const out = await PDFDocument.create(); const docs = new Map(), imgs = new Map();
+  const a4 = S.opt.size === 'a4';
+  for (const [n, p] of list.entries()) {
+    toast(`กำลังสร้าง PDF · หน้า ${n + 1}/${list.length}`, {prog: n / list.length, stay: true});
+    if (p.src.kind === 'pdf') {
+      let d = docs.get(p.src);
+      if (d === undefined) { try { d = p.src.locked ? null : await PDFDocument.load(p.src.buf); } catch (e) { d = null; } docs.set(p.src, d); }
+      if (d) {
+        const [pg] = await out.copyPages(d, [p.i - 1]);
+        pg.setRotation(degrees((pg.getRotation().angle + p.rot) % 360)); out.addPage(pg);
+      } else { // encrypted PDF: draw the decrypted page as an image
+        const {c, scale} = await pdfPageCanvas(p.src, p.i, p.rot, 2.5);
+        const im = await out.embedJpg(new Uint8Array(await (await canvasBlob(c, 'image/jpeg', .9)).arrayBuffer()));
+        const W = c.width / scale, H = c.height / scale;
+        out.addPage([W, H]).drawImage(im, {x: 0, y: 0, width: W, height: H}); c.width = c.height = 0;
+      }
+    } else {
+      let im = imgs.get(p.src);
+      if (!im) {
+        const png = /png/i.test(p.src.type), c = imgCanvas(p.src.img, 0);
+        const bytes = new Uint8Array(await (await canvasBlob(c, png ? 'image/png' : 'image/jpeg', .92)).arrayBuffer());
+        c.width = c.height = 0;
+        im = png ? await out.embedPng(bytes) : await out.embedJpg(bytes); imgs.set(p.src, im);
+      }
+      const w = im.width, h = im.height; let pw = w, ph = h, x = 0, y = 0, dw = w, dh = h;
+      if (a4) { const land = w > h; pw = land ? 842 : 595; ph = land ? 595 : 842; const m = 24, s = Math.min((pw - 2 * m) / w, (ph - 2 * m) / h); dw = w * s; dh = h * s; x = (pw - dw) / 2; y = (ph - dh) / 2; }
+      const pg = out.addPage([pw, ph]); pg.drawImage(im, {x, y, width: dw, height: dh}); pg.setRotation(degrees(p.rot));
+    }
+  }
+  toast('เกือบเสร็จแล้ว…', {prog: 1, stay: true});
+  return out.save();
+}
+async function saveImages(list) {
+  const jpg = S.opt.fmt === 'jpg', type = jpg ? 'image/jpeg' : 'image/png', ext = jpg ? 'jpg' : 'png', name = baseName(), total = list.length;
+  if (total === 1) { toast('กำลังสร้างรูป…', {prog: .5, stay: true}); const b = await canvasBlob(await pageCanvas(list[0]), type, .92); setBusy(false); return save(`${name}.${ext}`, b); }
+  const zip = new JSZip(), pad = String(total).length;
+  for (const [n, p] of list.entries()) {
+    toast(`กำลังสร้างรูป · หน้า ${n + 1}/${total}`, {prog: n / total, stay: true});
+    const c = await pageCanvas(p);
+    zip.file(`${name}-${String(n + 1).padStart(pad, '0')}.${ext}`, await canvasBlob(c, type, .92)); c.width = c.height = 0;
+  }
+  toast('กำลังรวมเป็น .zip…', {prog: 1, stay: true});
+  const z = await zip.generateAsync({type: 'blob'}); setBusy(false); return save(`${name}.zip`, z);
+}
+async function save(filename, data) {
+  try {
+    const blob = data instanceof Blob ? data : new Blob([data], {type: filename.endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream'});
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = filename; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast(`บันทึก ${filename} แล้ว ดูได้ในโฟลเดอร์ดาวน์โหลด`);
+  } catch (e) { toast('บันทึกไม่สำเร็จ ลองอีกครั้ง'); }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#saveOv').hidden) $('#saveOv').hidden = true; else if (S.sel.size) { S.sel.clear(); render(); } } });
+render();
+}
+</script>
+</body>
+</html>
